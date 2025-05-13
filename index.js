@@ -44,29 +44,34 @@ const getTotalSupply = async () => {
 };
 
 // Get Balance of Locked Wallets
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 const getLockedBalances = async () => {
     try {
-        const balancePromises = LOCKED_WALLETS.map(async (wallet) => {
-            const url = `https://api.polygonscan.com/api?module=account&action=tokenbalance&contractaddress=${CONTRACT_ADDRESS}&address=${wallet}&apikey=${POLYGONSCAN_API_KEY}`;
-            console.log(`Fetching balance for wallet: ${wallet}`);
-            
+        const balances = {};
+
+        for (let i = 0; i < LOCKED_WALLETS.length; i++) {
+            const wallet = LOCKED_WALLETS[i];
+            console.log(`Fetching balance for ${wallet}`);
+
+            const url = `https://api.polygonscan.com/api?module=account&action=tokenbalance&contractaddress=${CONTRACT_ADDRESS}&address=${wallet}&tag=latest&apikey=${POLYGONSCAN_API_KEY}`;
+
             const response = await axios.get(url);
-            
-            if (response.data.status !== '1') {
+
+            if (response.data.status !== "1") {
                 console.error(`Error fetching balance for ${wallet}: ${JSON.stringify(response.data)}`);
-                throw new Error(`Invalid response from balance API for ${wallet}: ${JSON.stringify(response.data)}`);
+                throw new Error(`Failed to fetch balance for wallet ${wallet}`);
             }
 
-            console.log(`Balance fetched for ${wallet}: ${response.data.result}`);
-            return BigInt(response.data.result);
-        });
+            balances[wallet] = BigInt(response.data.result);
 
-        const balances = await Promise.all(balancePromises);
-        const totalLocked = balances.reduce((acc, balance) => acc + balance, BigInt(0));
-        console.log(`Total Locked Balance: ${totalLocked}`);
-        return totalLocked;
+            // Introduce a delay of 300ms (5 calls per second limit → 1000ms/5 = 200ms, adding buffer)
+            await delay(300);  
+        }
+
+        return balances;
     } catch (error) {
-        console.error(`Failed to fetch locked balances: ${error.message}`);
+        console.error("Failed to fetch locked balances:", error.message);
         throw error;
     }
 };

@@ -100,7 +100,7 @@ app.get("/api/circulating-supply", async (req, res) => {
 
         console.log("Circulating Supply:", circulatingSupply);
 
-        res.json({ circulatingSupply: circulatingSupply / BigInt(1e18) });
+        res.json({ circulatingSupply: (circulatingSupply / BigInt("1000000000000000000")).toString() });
     } catch (error) {
         console.error("Error fetching circulating supply:", error.message);
         res.status(500).json({ error: "Failed to fetch circulating supply" });

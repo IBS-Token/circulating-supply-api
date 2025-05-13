@@ -16,14 +16,6 @@ const logger = (req, res, next) => {
 };
 app.use(logger);
 
-// Helper Function to Format BigInt
-const formatBigInt = (value, decimals = 18) => {
-    const divisor = BigInt(10 ** decimals);
-    const wholePart = value / divisor;
-    const formatted = wholePart.toLocaleString('en-US');
-    return formatted;
-};
-
 // Get Total Supply from Polygonscan
 const getTotalSupply = async () => {
     try {
@@ -43,9 +35,10 @@ const getTotalSupply = async () => {
     }
 };
 
-// Get Balance of Locked Wallets
+// Delay Function (300ms delay for rate limiting)
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+// Get Balance of Locked Wallets
 const getLockedBalances = async () => {
     try {
         const balances = {};
@@ -64,9 +57,7 @@ const getLockedBalances = async () => {
             }
 
             balances[wallet] = BigInt(response.data.result);
-
-            // Introduce a delay of 300ms (5 calls per second limit → 1000ms/5 = 200ms, adding buffer)
-            await delay(300);  
+            await delay(300);  // Wait 300ms to respect rate limit
         }
 
         return balances;
@@ -95,12 +86,13 @@ app.get("/api/circulating-supply", async (req, res) => {
 
         console.log("Total Locked:", totalLocked.toString());
 
-        // Calculate circulating supply and convert to string
-        const circulatingSupply = (totalSupply - totalLocked).toString();
+        // Calculate circulating supply and divide by 10^18 to remove decimals
+        const circulatingSupply = (totalSupply - totalLocked) / BigInt("1000000000000000000");
 
-        console.log("Circulating Supply:", circulatingSupply);
+        console.log("Circulating Supply:", circulatingSupply.toString());
 
-        res.json({ circulatingSupply: (circulatingSupply / BigInt("1000000000000000000")).toString() });
+        // Send back the response as a string to avoid BigInt issues
+        res.json({ circulatingSupply: circulatingSupply.toString() });
     } catch (error) {
         console.error("Error fetching circulating supply:", error.message);
         res.status(500).json({ error: "Failed to fetch circulating supply" });

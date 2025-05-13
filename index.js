@@ -73,7 +73,7 @@ const getLockedBalances = async () => {
 };
 
 // Endpoint to get Circulating Supply
-app.get('/api/circulating-supply', async (req, res) => {
+app.get('/circulating-supply', async (req, res) => {
     try {
         const totalSupply = await getTotalSupply();
         const totalLocked = await getLockedBalances();

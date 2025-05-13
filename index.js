@@ -18,7 +18,7 @@ const LOCKED_WALLETS = [
 
 // Get total supply
 async function getTotalSupply() {
-  const url = https://api.polygonscan.com/api?module=stats&action=tokensupply&contractaddress=${CONTRACT_ADDRESS}&apikey=${POLYGONSCAN_API_KEY};
+  const url = "https://api.polygonscan.com/api?module=stats&action=tokensupply&contractaddress=...&apikey=...";
   const response = await axios.get(url);
 
   if (!response.data || response.data.status !== "1") {

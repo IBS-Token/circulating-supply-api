@@ -77,17 +77,33 @@ const getLockedBalances = async () => {
 };
 
 // Endpoint to get Circulating Supply
-app.get('/circulating-supply', async (req, res) => {
+app.get("/api/circulating-supply", async (req, res) => {
     try {
-        const totalSupply = await getTotalSupply();
-        const totalLocked = await getLockedBalances();
-        const circulatingSupply = totalSupply - totalLocked;
+        console.log("Fetching total supply and locked balances...");
 
-        console.log(`Circulating Supply Calculated: ${circulatingSupply}`);
-        res.json({ circulatingSupply: formatBigInt(circulatingSupply) });
+        const totalSupply = await getTotalSupply();
+        const lockedBalances = await getLockedBalances();
+        
+        console.log("Total Supply:", totalSupply.toString());
+        console.log("Locked Balances:", lockedBalances);
+
+        // Calculate total locked
+        let totalLocked = BigInt(0);
+        for (const balance of Object.values(lockedBalances)) {
+            totalLocked += balance;
+        }
+
+        console.log("Total Locked:", totalLocked.toString());
+
+        // Calculate circulating supply and convert to string
+        const circulatingSupply = (totalSupply - totalLocked).toString();
+
+        console.log("Circulating Supply:", circulatingSupply);
+
+        res.json({ circulatingSupply });
     } catch (error) {
-        console.error(`Error in /api/circulating-supply: ${error.message}`);
-        res.status(500).json({ error: 'Failed to fetch circulating supply' });
+        console.error("Error fetching circulating supply:", error.message);
+        res.status(500).json({ error: "Failed to fetch circulating supply" });
     }
 });
 

@@ -1,5 +1,6 @@
 const express = require("express");
 const axios = require("axios");
+const Bottleneck = require("bottleneck");
 
 const app = express();
 const PORT = 3000;
@@ -16,18 +17,37 @@ const LOCKED_WALLETS = [
   "0xEDDf191e5581C7aFd9B634B48C1c4a2cAbAeF8D4"
 ];
 
+// Rate limiter: max 4 requests per second (250ms delay)
+const limiter = new Bottleneck({
+  minTime: 250
+});
+
+// Helper: safely convert result to BigInt
+function safeBigInt(result) {
+  if (!result || isNaN(result) || result.includes("rate limit")) {
+    throw new Error(Invalid response: ${result});
+  }
+  return BigInt(result);
+}
+
+// Rate-limited fetch wrapper
+async function fetchPolygonscan(url) {
+  const response = await limiter.schedule(() => axios.get(url));
+  return response.data.result;
+}
+
 // Get total supply
 async function getTotalSupply() {
-  const url = `https://api.polygonscan.com/api?module=stats&action=tokensupply&contractaddress=${CONTRACT_ADDRESS}&apikey=${POLYGONSCAN_API_KEY}`;
-  const response = await axios.get(url);
-  return BigInt(response.data.result);
+  const url = https://api.polygonscan.com/api?module=stats&action=tokensupply&contractaddress=${CONTRACT_ADDRESS}&apikey=${POLYGONSCAN_API_KEY};
+  const result = await fetchPolygonscan(url);
+  return safeBigInt(result);
 }
 
 // Get wallet balance
 async function getWalletBalance(wallet) {
-  const url = `https://api.polygonscan.com/api?module=account&action=tokenbalance&contractaddress=${CONTRACT_ADDRESS}&address=${wallet}&tag=latest&apikey=${POLYGONSCAN_API_KEY}`;
-  const response = await axios.get(url);
-  return BigInt(response.data.result);
+  const url = https://api.polygonscan.com/api?module=account&action=tokenbalance&contractaddress=${CONTRACT_ADDRESS}&address=${wallet}&tag=latest&apikey=${POLYGONSCAN_API_KEY};
+  const result = await fetchPolygonscan(url);
+  return safeBigInt(result);
 }
 
 // Root route
@@ -48,8 +68,6 @@ app.get("/circulating-supply", async (req, res) => {
     }
 
     const circulatingSupply = totalSupply - burnedTokens - lockedTokens;
-
-    // Convert from smallest unit to whole tokens
     const format = (value) => (value / DECIMALS).toString();
 
     res.json({
@@ -59,13 +77,14 @@ app.get("/circulating-supply", async (req, res) => {
       lockedTokens: format(lockedTokens),
       circulatingSupply: format(circulatingSupply)
     });
+
   } catch (error) {
     console.error("❌ Error fetching data:", error.message);
-    res.status(500).json({ error: "Error fetching data from Polygonscan." });
+    res.status(500).json({ error: error.message || "Error fetching data." });
   }
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`✅ API running on http://localhost:${PORT}`);
+  console.log(✅ API running on http://localhost:${PORT});
 });

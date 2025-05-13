@@ -9,19 +9,12 @@ const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
 const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY;
 const LOCKED_WALLETS = process.env.LOCKED_WALLETS.split(',');
 
-<<<<<<< HEAD
 // Logging Middleware
 const logger = (req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 };
 app.use(logger);
-=======
-// Get total supply
-async function getTotalSupply() {
-  const url = "https://api.polygonscan.com/api?module=stats&action=tokensupply&contractaddress=...&apikey=...";
-  const response = await axios.get(url);
->>>>>>> 88bd7bc9a5de57f227020d2fdfdd8ce3abedf4de
 
 // Helper Function to Format BigInt
 const formatBigInt = (value, decimals = 18) => {
@@ -96,10 +89,5 @@ app.get('/api/circulating-supply', async (req, res) => {
 
 // Start the Server
 app.listen(PORT, () => {
-<<<<<<< HEAD
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-=======
-  console.log(✅ API running on http://localhost:${PORT});
-});
->>>>>>> 88bd7bc9a5de57f227020d2fdfdd8ce3abedf4de
